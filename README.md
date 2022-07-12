@@ -2,6 +2,10 @@
 
 > 一个常用网络工具集
 
+![image](https://img.shields.io/github/downloads/MX233/NetworkTools/total)
+
+进入[Releases](https://github.com/MX233/NetworkTools/releases) 后点击`NetworkTools-x.x.x.mirai2.jar` 下载
+
 __前置插件:__
 - [`chat-command`](https://github.com/project-mirai/chat-command)
 
