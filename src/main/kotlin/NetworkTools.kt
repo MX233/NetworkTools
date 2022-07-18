@@ -10,7 +10,7 @@ import top.cutestar.networkTools.commands.*
 object NetworkTools : KotlinPlugin(
     JvmPluginDescription(
         id = "top.cutestar.networkTools",
-        version = "1.0.0",
+        version = "1.1.0",
         name = "NetworkTools",
     ){
         author("CuteStar")
