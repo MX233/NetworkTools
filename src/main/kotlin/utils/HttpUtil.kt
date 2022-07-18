@@ -18,7 +18,8 @@ class HttpUtil(
     headers: MutableMap<String, String> = mutableMapOf(
         "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
         "Connection" to "keep-alive"
-    )
+    ),
+    useProxy: Boolean = true
 ) {
     var response: Response? = null
 
@@ -28,7 +29,7 @@ class HttpUtil(
             .callTimeout(Config.webTimeout, TimeUnit.MILLISECONDS)
             .readTimeout(Config.webTimeout, TimeUnit.MILLISECONDS).also { client ->
                 Config.run {
-                    if (proxyEnabled) {
+                    if (proxyEnabled && useProxy) {
                         client.proxy(
                             Proxy(
                                 Proxy.Type.valueOf(proxyType.toUpperCasePreservingASCIIRules()),
@@ -39,6 +40,7 @@ class HttpUtil(
                 }
             }
             .build()
+
         val request = Request.Builder().run {
             url(url)
             headers.forEach { (k, v) ->
@@ -67,7 +69,8 @@ class HttpUtil(
     fun getString(charset: String = Config.webCharset,autoClose: Boolean = true) = String(getBytes(autoClose), Charset.forName(charset))
 
     fun close() {
-        response?.close()
         getInputStream().close()
+        response?.body?.close()
+        response?.close()
     }
 }

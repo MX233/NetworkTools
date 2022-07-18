@@ -1,17 +1,20 @@
 package top.cutestar.networkTools.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.data.ForwardMessageBuilder
-import net.mamoe.mirai.message.data.Message
-import net.mamoe.mirai.message.data.PlainText
 import top.cutestar.networkTools.Config
 import top.cutestar.networkTools.NetworkTools
-import top.cutestar.networkTools.utils.Util
+import top.cutestar.networkTools.utils.Util.autoToForwardMsg
+import top.cutestar.networkTools.utils.Util.dnsQuery
+import top.cutestar.networkTools.utils.Util.getLocation
+import top.cutestar.networkTools.utils.Util.getValue
 import top.cutestar.networkTools.utils.Util.withHelper
-import java.io.IOException
-import javax.naming.NameNotFoundException
+import kotlin.system.measureTimeMillis
 
 object DnsCommand : SimpleCommand(
     owner = NetworkTools,
@@ -22,31 +25,60 @@ object DnsCommand : SimpleCommand(
     @Handler
     suspend fun CommandSender.onHandler(
         @Name("记录名称") s: String,
-        @Name("记录类型") types: Array<String> = Config.dnsTypes,
+        @Name("记录类型") type: String = "default",
         @Name("自定义DNS") dns: String = Config.dnsAddress
     ) = withHelper {
-        sendMessage(executeDnsQuery(s, types, dns))
+        val types = if (type == "default") Config.dnsTypes else getValue(type)
+        executeDnsQuery(getValue(s), types, dns)
     }
 
-    private suspend fun CommandSender.executeDnsQuery(s: String, types: Array<String>, dns: String):Message {
-        val msg = ForwardMessageBuilder(subject ?: throw IOException("subject is null"))
-        var count = 0
-        types.forEach { type ->
-            try {
-                val list = Util.dnsQuery(s, type, dns)
-                val sb = StringBuilder(type)
-                list.forEach {
-                    sb.append("\n").append(it)
-                    count++
+    private suspend fun CommandSender.executeDnsQuery(
+        hosts: MutableSet<String>,
+        types: MutableSet<String>,
+        dns: String
+    ) = runBlocking {
+        val words = mutableListOf<CharSequence>("查询完成,DNS:$dns")
+
+        hosts.forEach { host ->
+            val sb = StringBuilder(host)
+            var count = 0
+
+            types.forEach { type ->
+                val list = dnsQuery(host, type, dns)
+                if (list.isNotEmpty()) {
+                    sb.append(" \n").append(type).append(":")
+                    launch {
+                        list.forEach {
+                            count++
+                            if (type.equals("A", true) || type.equals("AAAA", true)) {
+                                launch(Dispatchers.IO) l@{
+                                    val locationAsync = async { getLocation(it) }
+                                    val address = PingCommand.getAddress(it) ?: return@l
+                                    val time = run {
+                                        val isReachable: Boolean
+                                        val time = measureTimeMillis { isReachable = address.isReachable(2000) }
+                                        if (isReachable) "${time}ms" else "超时"
+                                    }
+
+                                    val location = locationAsync.await()
+                                    sb.run {
+                                        append("\n")
+                                        append(it)
+                                        append(" ")
+                                        append(time)
+                                        append(" ")
+                                        append(location)
+                                        append("\n")
+                                    }
+                                }
+                            } else sb.append("\n").append(it)
+                        }
+                    }.join()
                 }
-                msg.add(
-                    senderId = bot?.id ?: return@forEach,
-                    senderName = "${list.size}条记录",
-                    message = PlainText(sb)
-                )
-            } catch (_: NameNotFoundException) {}
+            }
+            words.add(sb.append("\n共").append(count).append("个记录"))
         }
-        sendMessage("DNS查询完成,共找到${count}条记录\nDNS:$dns")
-        return msg.build()
+
+        autoToForwardMsg(words)
     }
 }

@@ -1,63 +1,76 @@
 package top.cutestar.networkTools.commands
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.message.data.ForwardMessageBuilder
-import net.mamoe.mirai.message.data.Message
-import net.mamoe.mirai.message.data.PlainText
 import top.cutestar.networkTools.Config
 import top.cutestar.networkTools.NetworkTools
 import top.cutestar.networkTools.utils.Util
+import top.cutestar.networkTools.utils.Util.autoToForwardMsg
+import top.cutestar.networkTools.utils.Util.getValue
 import top.cutestar.networkTools.utils.Util.withHelper
-import java.io.IOException
 import java.nio.charset.Charset
 import java.util.regex.Pattern
 import kotlin.system.measureTimeMillis
 
-object TracertCommand: SimpleCommand(
+object TracertCommand : SimpleCommand(
     owner = NetworkTools,
     primaryName = "tracert",
     "tr",
     description = "路由追踪"
 ) {
+    val rule: Pattern = Pattern.compile("[a-zA-Z0-9.:]")
+
     @OptIn(ConsoleExperimentalApi::class)
     @Handler
-    suspend fun CommandSender.onHandler(@Name("目标名称")s: String) = withHelper{
-        val address = StringBuilder()
-        val m = Pattern.compile("[a-zA-Z0-9.:]").matcher(s)
-        while (m.find()) {
-            address.append(m.group())
+    suspend fun CommandSender.onHandler(@Name("目标名称") hosts: String) = withHelper {
+        val set = mutableSetOf<String>()
+        getValue(hosts).forEach {
+            val sb = StringBuilder()
+            val m = rule.matcher(it)
+            while (m.find()) {
+                sb.append(m.group())
+            }
+            set.add(sb.toString())
         }
 
         sendMessage("正在追踪 请稍等")
-        sendMessage(executeTracert(address.toString(),Config.tracertWaitTime))
+        executeTracert(set)
     }
 
-    private fun CommandSender.executeTracert(address: String, waitTime: Int): Message {
-        val fmsg = ForwardMessageBuilder(subject ?: throw IOException("subject is null"))
-            val process = Runtime.getRuntime().exec("tracert -w $waitTime -d $address")
-        val time = measureTimeMillis {process.waitFor()}
-        val buffer = process.inputStream.bufferedReader(Charset.forName(Config.consoleCharset))
-        var s = buffer.readLine()
-        while (s != null) {
-            val msg = StringBuilder(s)
-            Util.getIp(s).let { ip ->
-                if (ip != null) msg.append("\n").append(Util.getLocation(ip))
+    private fun CommandSender.executeTracert(hosts: MutableSet<String>) = runBlocking {
+        val words = mutableListOf("路由追踪")
+        launch {
+            hosts.forEach { host ->
+                launch(Dispatchers.IO) {
+                    val sb = StringBuilder()
+                    val command =
+                        (if ("windows" in System.getProperty("os.name").lowercase())
+                            Config.tracertWCommand
+                        else
+                            Config.tracertOCommand).replace("${"$"}address", host)
+                    val process = Runtime.getRuntime().exec(command)
+                    val time = measureTimeMillis { process.waitFor() }
+                    val buffer = process.inputStream.bufferedReader(Charset.forName(Config.consoleCharset))
+                    var s = buffer.readLine()
+                    while (s != null) {
+                        val msg = StringBuilder(s).append("\n")
+                        Util.getIp(s).let { ip ->
+                            if (ip != null) msg.append(Util.getLocation(ip)).append("\n\n")
+                        }
+                        sb.append(msg.toString())
+                        s = buffer.readLine()
+                    }
+                    sb.append("\n用时:${time.toDouble() / 1000}秒")
+                    words.add(sb.toString())
+                }
             }
-            fmsg.add(
-                senderId = bot?.id ?: continue,
-                senderName = bot?.nick ?: continue,
-                message = PlainText(msg)
-            )
-            s = buffer.readLine()
-        }
-        fmsg.add(
-            senderId = bot!!.id,
-            senderName = bot!!.nick,
-            PlainText("用时:${time}ms")
-        )
-        if (fmsg.size == 0) throw IOException("追踪失败")
-        return fmsg.build()
+        }.join()
+
+        autoToForwardMsg(words)
     }
 }
+

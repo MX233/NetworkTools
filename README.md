@@ -17,7 +17,8 @@ __前置插件:__
 - > `Nmap` 端口扫描
 - > `DoH` Dns over Https 加密DNS查询
 
-修改配置文件后需使用`/ntools reload`
+修改配置文件后需使用 `/ntools reload` 重载配置生效
+查看菜单帮助 `/ntools help`
 
 功能介绍
 
@@ -27,10 +28,10 @@ __前置插件:__
 
 | 功能      | 命令格式                               | 命令示例                                         | PS                                       |
 |---------|:-----------------------------------|:---------------------------------------------|:-----------------------------------------|
-| Ping    | `/ping` `<目标名称>` `[超时时间]`          | `/ping github.com 5000`                      | 地址后加`:`为TcpPing 示例`/ping github.com:443` |
+| Ping    | `/ping` `<目标名称>` `[超时时间]`          | `/ping github.com 3 5000`                    | 地址后加`:`为TcpPing 示例`/ping github.com:443` |
 | Tracert | `/tr` `<目标名称>`                     | `/tr github.com`                             | -                                        |
 | Web     | `/web` `<URL链接>` `[编码]`            | `/web https://github.com`                    | -                                        |
-| Dns     | `/dns` `<目标名称>` `[类型]` `[DNS]`     | `/dns github.com A 8.8.8.8`                  | -                                        |
+| Dns     | `/dns` `<目标名称>` `[类型]` `[DNS]`     | `/dns github.com A`                          | -                                        |
 | Nmap    | `/nmap` `<目标名称>` `[端口]`            | `/nmap github.com` `/nmap github.com 80,443` | 不指定 默认扫前1000个端口                          |
 | Nmap    | `/nmap` `<目标名称>` `[起始端口]` `[结束端口]` | `/nmap github.com 1 2000`                    | 扫描从起始到结束的端口                              |
 | DoH     | `/doh` `<目标名称>` `[类型]`             | `/doh google.com`                            | 默认使用的DoH服务器已被中国大陆封锁 请先在配置文件设置代理          |

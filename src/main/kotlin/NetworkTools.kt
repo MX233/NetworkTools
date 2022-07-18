@@ -29,6 +29,6 @@ object NetworkTools : KotlinPlugin(
         registerCommand(WebCommand)
         registerCommand(NmapCommand)
         registerCommand(DoHCommand)
-        registerCommand(Reload)
+        registerCommand(Ntools)
     }
 }

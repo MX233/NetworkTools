@@ -26,24 +26,27 @@ object Config : AutoSavePluginConfig("config") {
     @ValueDescription("Web连接超时时间(毫秒)")
     var webTimeout:Long by value((10_000).toLong())
 
-    @ValueDescription("路由追踪等待时间(毫秒)")
-    var tracertWaitTime by value(500)
-
-    @ValueDescription("Ping命令测试超时时间(毫秒)")
-    var pingTimeout by value(3_000)
-
     @ValueDescription("DNS命令查询默认服务器")
     var dnsAddress by value("8.8.8.8")
 
     @ValueDescription("DNS默认查询类型")
-    var dnsTypes by value(arrayOf("A","AAAA","CNAME","TXT","NS","SOA","MX"))
-
-    @ValueDescription("Web查询链接数量限制")
-    var webLinkCount by value(50)
+    var dnsTypes: MutableSet<String> by value(mutableSetOf("A","AAAA","CNAME","TXT","NS","SOA","MX"))
 
     @ValueDescription("端口扫描超时时间(毫秒)")
     var nmapTimeout by value(400)
 
+    @ValueDescription("路由追踪 Windows系统命令")
+    var tracertWCommand by value("tracert -w 400 -d ${"$"}address")
+
+    @ValueDescription("路由追踪 其他系统命令")
+    var tracertOCommand by value("traceroute -w 1 -n -q 1 ${"$"}address")
+
     @ValueDescription("DoH服务器 cf DoH被封锁 需要代理")
     var dohAddress by value("https://cloudflare-dns.com/dns-query?name=${"$"}s&type=${"$"}type")
+
+    @ValueDescription("因qq特性可能会查看不了转发信息 设置成true发送文本信息")
+    var noForwardMsg by value(false)
+
+    @ValueDescription("纯文本信息字数限制")
+    var textMsgLimit by value(200)
 }
