@@ -29,6 +29,8 @@ object Ntools: CompositeCommand(
   /nmap <目标名称> <起始端口> <结束端口>    # 端口扫描
   /nmap <目标名称> <端口>    # 端口扫描
 ◆ /doh <域名> [类型]    # HTTPS加密DNS查询
-◆ /ntools reload    # 重载配置 """.trimIndent())
+◆ /gc <目标名称>    # 查墙
+◆ /ntools help    # 查看帮助命令
+  /ntools reload    # 重载配置""".trimIndent())
     }
 }

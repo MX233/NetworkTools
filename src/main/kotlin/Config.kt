@@ -5,7 +5,7 @@ import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
 
 object Config : AutoSavePluginConfig("config") {
-    @ValueDescription("设置是否使用代理 在http(s)生效")
+    @ValueDescription("设置是否使用代理 在http(s)测墙 生效")
     var proxyEnabled by value(false)
 
     @ValueDescription("设置代理地址")
@@ -43,6 +43,12 @@ object Config : AutoSavePluginConfig("config") {
 
     @ValueDescription("DoH服务器 cf DoH被封锁 需要代理")
     var dohAddress by value("https://cloudflare-dns.com/dns-query?name=${"$"}s&type=${"$"}type")
+
+    @ValueDescription("nmap端口扫描线程池大小")
+    var nmapPoolSize by value(50)
+
+    @ValueDescription("GFWList定时更新间隔(秒) 0为不预加载和自动更新")
+    var gfwListUpdateInterval:Long by value((0).toLong())
 
     @ValueDescription("因qq特性可能会查看不了转发信息 设置成true发送文本信息")
     var noForwardMsg by value(false)

@@ -1,5 +1,6 @@
 package top.cutestar.networkTools.commands
 
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -27,14 +28,14 @@ object DoHCommand : SimpleCommand(
 
     @OptIn(ConsoleExperimentalApi::class)
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("域名") s: String,
         @Name("类型") type: String = "A"
     ) = withHelper {
         executeDoH(getValue(s), getValue(type))
     }
 
-    suspend fun CommandSender.executeDoH(hosts: MutableSet<String>, types: MutableSet<String>) {
+    fun CommandSender.executeDoH(hosts: MutableSet<String>, types: MutableSet<String>) = launch{
         val json = Json { ignoreUnknownKeys = true }
         val headers = mutableMapOf("accept" to "application/dns-json")
         val word = mutableListOf<CharSequence>("---DNS over HTTPS---")

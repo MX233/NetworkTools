@@ -1,9 +1,6 @@
 package top.cutestar.networkTools.commands
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -23,7 +20,7 @@ object DnsCommand : SimpleCommand(
 ) {
     @OptIn(ConsoleExperimentalApi::class)
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("记录名称") s: String,
         @Name("记录类型") type: String = "default",
         @Name("自定义DNS") dns: String = Config.dnsAddress
@@ -32,11 +29,11 @@ object DnsCommand : SimpleCommand(
         executeDnsQuery(getValue(s), types, dns)
     }
 
-    private suspend fun CommandSender.executeDnsQuery(
+    private fun CommandSender.executeDnsQuery(
         hosts: MutableSet<String>,
         types: MutableSet<String>,
         dns: String
-    ) = runBlocking {
+    ) = launch {
         val words = mutableListOf<CharSequence>("查询完成,DNS:$dns")
 
         hosts.forEach { host ->

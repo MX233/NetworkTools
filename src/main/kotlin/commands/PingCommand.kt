@@ -2,7 +2,7 @@ package top.cutestar.networkTools.commands
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -25,7 +25,7 @@ object PingCommand : SimpleCommand(
 ) {
     @OptIn(ConsoleExperimentalApi::class)
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("目标名称") s: String,
         @Name("ping次数") count: Int = 3,
         @Name("超时时间(毫秒)") timeout: Int = 3000
@@ -34,7 +34,7 @@ object PingCommand : SimpleCommand(
         executePing(getValue(s), timeout, count)
     }
 
-    private suspend fun CommandSender.executePing(hosts: MutableSet<String>, timeout: Int, count: Int) = runBlocking{
+    private fun CommandSender.executePing(hosts: MutableSet<String>, timeout: Int, count: Int) = launch {
         val words = mutableListOf<String>()
         hosts.forEach { host ->
             val splitStr = host.split(":")
@@ -101,7 +101,7 @@ object PingCommand : SimpleCommand(
                     }
                 }
                 info = when (success > 0) {
-                    true -> "最短:${timeList.min()}ms 最长:${timeList.max()}ms 平均:${time}ms"
+                    true -> "最短:${timeList.minOrNull()}ms 最长:${timeList.maxOrNull()}ms 平均:${time}ms"
                     false -> "连接超时"
                 }
 

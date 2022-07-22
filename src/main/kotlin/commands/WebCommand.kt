@@ -1,6 +1,6 @@
 package top.cutestar.networkTools.commands
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -21,7 +21,7 @@ object WebCommand : SimpleCommand(
 ) {
     @OptIn(ConsoleExperimentalApi::class)
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("URL链接") s: String,
         @Name("编码") charset: String = Config.webCharset
     ) = withHelper {
@@ -33,22 +33,27 @@ object WebCommand : SimpleCommand(
         executeWeb(urls, charset)
     }
 
-    private suspend fun CommandSender.executeWeb(urls: MutableSet<String>, charset: String) = runBlocking{
+    private fun CommandSender.executeWeb(urls: MutableSet<String>, charset: String) = launch{
         val words = mutableListOf<String>()
         urls.forEach { url ->
-            val web: HttpUtil
-            val time = measureTimeMillis { web = HttpUtil(url) }
-            val response = web.response!!
-            val server = response.headers.filter { it.first.equals("server", true) }.run {
-                if (isEmpty()) "" else this[0].second
+            val http: HttpUtil
+            val time = measureTimeMillis { http = HttpUtil(url) }
+            val connection = http.getConnection()
+            var server = ""
+            connection.headerFields.forEach headerFields@{ (k, v) ->
+                if (k.equals("server", true)) {
+                    server = v[0]
+                    return@headerFields
+                }
             }
-            val s = web.getString(charset, false).replace("\n", "")
+            val s = http.getString(charset, false).replace("\n", "")
+            val status = "${connection.responseCode}(${connection.responseMessage})"
 
             sendMessage(
                     ("""---Web测试---
 $url
 标题:${getTitle(s)}
-状态码:${response.code}(${response.message})
+状态码:$status
 http延时:${time}ms
 服务端:$server
 """.trimIndent())
@@ -62,7 +67,7 @@ http延时:${time}ms
                 length += text.length
                 words.add(if (length <= 3000) text else return@link)
             }
-            web.close()
+            http.close()
         }
         autoToForwardMsg(words)
     }

@@ -1,7 +1,6 @@
 package top.cutestar.networkTools.commands
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
@@ -13,6 +12,7 @@ import top.cutestar.networkTools.utils.Util.getValue
 import top.cutestar.networkTools.utils.Util.withHelper
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.util.concurrent.Executors
 import kotlin.system.measureTimeMillis
 
 @OptIn(ConsoleExperimentalApi::class)
@@ -22,14 +22,14 @@ object NmapCommand : SimpleCommand(
     description = "端口扫描",
 ) {
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("目标名称") hosts: String,
     ) {
         executeNmap(getValue(hosts), (1..1000).toMutableSet())
     }
 
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("目标名称") hosts: String,
         @Name("端口") ports: String
     ) {
@@ -41,7 +41,7 @@ object NmapCommand : SimpleCommand(
     }
 
     @Handler
-    suspend fun CommandSender.onHandler(
+    fun CommandSender.onHandler(
         @Name("目标名称") hosts: String,
         @Name("起始端口") startPort: Int,
         @Name("结束端口") endPort: Int,
@@ -53,44 +53,40 @@ object NmapCommand : SimpleCommand(
         executeNmap(getValue(hosts), (startPort..endPort).toMutableSet())
     }
 
-    private suspend fun CommandSender.executeNmap(hosts: MutableSet<String>, ports: MutableSet<Int>) = withHelper {
-        coroutineScope {
-            sendMessage("正在扫描${hosts.size * ports.size}个端口，这需要一段时间")
-            launch {
-                val words = mutableListOf("TCP端口扫描")
-                hosts.forEach { host ->
-
-                    val activePorts = mutableListOf<Int>()
-                    val time = measureTimeMillis {
-                        launch {
-                            ports.forEach { port ->
-                                launch(Dispatchers.IO) {
-                                    Socket().run {
-                                        try {
-                                            connect(InetSocketAddress(host,port), Config.nmapTimeout)
-                                            activePorts.add(port)
-                                        } catch (_: Exception) {
-                                        } finally {
-                                            close()
-                                        }
-                                    }
+    private fun CommandSender.executeNmap(hosts: MutableSet<String>, ports: MutableSet<Int>) = launch{
+        sendMessage("正在扫描${hosts.size * ports.size}个端口，这需要一段时间")
+        val nmapDispatcher = Executors.newFixedThreadPool(Config.nmapPoolSize).asCoroutineDispatcher()
+        val words = mutableListOf("TCP端口扫描")
+        hosts.forEach { host ->
+            val activePorts = mutableListOf<Int>()
+            val time = measureTimeMillis {
+                launch {
+                    ports.forEach { port ->
+                        launch(nmapDispatcher) {
+                            Socket().run {
+                                try {
+                                    connect(InetSocketAddress(host, port), Config.nmapTimeout)
+                                    activePorts.add(port)
+                                } catch (_: Exception) {
+                                } finally {
+                                    close()
                                 }
                             }
-                        }.join()
+                        }
                     }
-                    activePorts.sort()//排序 顺序
+                }.join()
+            }
+            activePorts.sort()//排序 顺序
 
-                    words.add(
-                        """$host
+            words.add(
+                """$host
 用时:${time.toDouble() / 1000}秒
 端口数量:${activePorts.size}
 开放的TCP端口:
 ${activePorts.joinToString("\n")}""".trimIndent()
-                    )
-                }
-
-                autoToForwardMsg(words)
-            }
+            )
         }
+
+        autoToForwardMsg(words)
     }
 }

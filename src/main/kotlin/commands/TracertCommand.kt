@@ -2,7 +2,6 @@ package top.cutestar.networkTools.commands
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -41,7 +40,7 @@ object TracertCommand : SimpleCommand(
         executeTracert(set)
     }
 
-    private fun CommandSender.executeTracert(hosts: MutableSet<String>) = runBlocking {
+    private fun CommandSender.executeTracert(hosts: MutableSet<String>) = launch {
         val words = mutableListOf("路由追踪")
         launch {
             hosts.forEach { host ->

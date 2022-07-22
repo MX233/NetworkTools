@@ -1,7 +1,7 @@
 package top.cutestar.networkTools.utils
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -11,7 +11,6 @@ import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.buildMessageChain
 import top.cutestar.networkTools.Config
 import java.util.*
-import java.util.concurrent.ThreadLocalRandom
 import java.util.regex.Pattern
 import javax.naming.NameNotFoundException
 import javax.naming.directory.InitialDirContext
@@ -46,14 +45,12 @@ object Util {
         return json.decodeFromString<LocationData>(s).data.location
     }
 
-    suspend fun CommandSender.withHelper(block: suspend () -> Unit) {
-        withContext(Dispatchers.IO) {
-            try {
-                block.invoke()
-            } catch (e: Exception) {
-                sendMessage("执行失败:${e.message ?: "未知"}")
-                e.printStackTrace()
-            }
+    fun CommandSender.withHelper(block: suspend () -> Unit) = launch(Dispatchers.IO) {
+        try {
+            block.invoke()
+        } catch (e: Exception) {
+            sendMessage("执行失败:${e.message ?: "未知"}")
+            e.printStackTrace()
         }
     }
 

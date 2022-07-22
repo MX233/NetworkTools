@@ -6,6 +6,7 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugin.name
 import net.mamoe.mirai.console.plugin.version
 import top.cutestar.networkTools.commands.*
+import top.cutestar.networkTools.utils.GFWCheck
 
 object NetworkTools : KotlinPlugin(
     JvmPluginDescription(
@@ -20,6 +21,7 @@ object NetworkTools : KotlinPlugin(
         Config.reload()
         registerCommands()
         logger.info("$name V$version loaded")
+        if(Config.gfwListUpdateInterval > (0).toLong())GFWCheck.initGFWList()
     }
 
     private fun registerCommands() = CommandManager.run {
@@ -29,6 +31,7 @@ object NetworkTools : KotlinPlugin(
         registerCommand(WebCommand)
         registerCommand(NmapCommand)
         registerCommand(DoHCommand)
+        registerCommand(GFWCheckCommand)
         registerCommand(Ntools)
     }
 }
