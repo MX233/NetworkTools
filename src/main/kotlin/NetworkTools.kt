@@ -11,7 +11,7 @@ import top.cutestar.networkTools.utils.GFWCheck
 object NetworkTools : KotlinPlugin(
     JvmPluginDescription(
         id = "top.cutestar.networkTools",
-        version = "1.1.0",
+        version = "1.1.1",
         name = "NetworkTools",
     ){
         author("CuteStar")
