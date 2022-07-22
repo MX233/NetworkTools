@@ -16,6 +16,7 @@ __前置插件:__
 - > `Dns` 域名解析查询
 - > `Nmap` 端口扫描
 - > `DoH` Dns over Https 加密DNS查询
+- > `gc` 查墙
 
 修改配置文件后需使用 `/ntools reload` 重载配置生效
 查看菜单帮助 `/ntools help`
